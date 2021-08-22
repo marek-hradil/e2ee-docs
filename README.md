@@ -1,7 +1,7 @@
 # End-to-end Encryption Protocol Documentation
 
 > Author: Marek Hradil
-> Last Update: 20.8.2021
+> Last Update: 22.8.2021
 
 This document describes how the FaceUp encryption protocol works,
 what were the main design goals, and the choices we have made to achieve them.
