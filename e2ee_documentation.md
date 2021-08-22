@@ -40,11 +40,11 @@ The FaceUp platform can be shortly described as whistleblowing software - it giv
 
 ### Platforms
 
-- **Reporting app** (also Follow up)
+- **Reporting app**
   - Made for whistleblowers. They can create a new report or open an already existing one.
-- **Administration app** (also Akutan)
+- **Administration app**
   - Made for institution administrators. They can view reports, chat with whistleblowers or with other administrators and manage reports (assign people, change statuses, view and export graphs, ...). In the settings section, they can manage administrators, manage the organizational structure and customize institution reporting app - changing colors, texts, logos. Administrators cannot delete reports and can edit only reports created by themselves.
-- **Faceup administration** (also Kredenc)
+- **FaceUp administration**
   - Made for FaceUp employees. They can register, edit or delete institutions and manage their payments. Also, reports sent to unregistered schools can be viewed here and resent to school email.
 
 All of the platforms are web applications, served by a static file server and communicating with the backend server via HTTPS.
@@ -92,7 +92,6 @@ Schools have also:
 And companies differ:
 
 - sender name (optional)
-- more info
 - category of problem
 
 Different users then can interact with the report in different ways:
@@ -170,7 +169,7 @@ Reading the report after encrypting it is shown on this diagram:
 ### Report key exchange
 
 Transferring keys between users is done simply through user key pairs. Every user has its private key and public key (these are generated via `crypto_box_keypair`).
-After encrypting the report, users' public keys are fetched from the server. For every recipient (a user that should have access to the report), the report key is encrypted with the public key. The encrypted report keys are then sent to the backend and distributed between users.
+After encrypting the report, users public keys are fetched from the server. For every recipient (a user that should have access to the report), the report key is encrypted with the public key. The encrypted report keys are then sent to the backend and distributed between users.
 
 ### Creating report
 
@@ -191,7 +190,7 @@ The question is if the 10^16 size is sufficient however, the needed key derivati
 
 Common process based on email and password is used, however with two major differences:
 
-- we need to derive password key from
+- we need to derive key from password (later reffered to as password key)
 - we want to send a password that is pre-hashed, so we don't allow the backend to derive password key
   - that also requires user salt on client-side
 
@@ -219,7 +218,7 @@ In registration, the recovery key is created:
 
 - **Recovery key** (128 bit) - used to encrypt user private key, then serialized into a string and given to the user
 
-And the recovery key itself is encrypted with the current password key, to be showable in administration.
+The recovery key itself is also encrypted with the current password key, to be showable in administration.
 
 ![User registration process](/images/user-registration.png)
 
