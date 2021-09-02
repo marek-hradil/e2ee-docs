@@ -9,21 +9,27 @@ The main focus is to explain parts of the encryption system in a way that is und
 
 ## Outline
 
-- Platform specification
-- Main goals of encryption
-- Solution overview
-  - Environments and tools used
-  - Report encryption
-  - Report key exchange
-  - Creating report
-  - User login
-  - User registration & recovery
-  - Attachment encryption
-- Unfinished parts
-  - Integration with SSO4
-  - Key rotation
-- Future upgrades
-  - Web crypto keys
+- [Platform specification](#platform-specification)
+  - [Platforms](#platforms)
+  - [Users](#users)
+  - [Institutions](#institutions)
+  - [Reports](#reports)
+- [Main goals of encryption system](#main-goals-of-encryption-system)
+- [Solution overview](#solution-overview)
+  - [Environments and tools used](#environments-and-tools-used)
+  - [Report encryption](#report-encryption)
+  - [Report key exchange](#report-key-exchange)
+  - [Creating report](#creating-report)
+  - [User login](#user-login)
+  - [Whistleblower login](#whistleblower-login)
+  - [User registration and recovery](#user-registration-and-recovery)
+  - [Attachment encryption](#attachment-encryption)
+- [Unfinished parts](#unfinished-parts)
+  - [Integration with SSO](#integration-with-sso)
+  - [Key rotation](#key-rotation)
+  - [Better chat message and internal comment encryption](#better-chat-message-and-internal-comment-encryption)
+- [Future upgrades](#future-upgrades)
+  - [WebCrypto keys](#webcrypto-keys)
 
 ### How to read
 
@@ -207,7 +213,34 @@ With that in mind, the following process is implemented:
 
 ![User login process](/images/user-login.png)
 
-### User registration & recovery
+### Whistleblower login
+
+Logging in is for the whistleblower is very similar to the normal user process however, the obvious difference is that the whistleblower doesn't have an email address and password, as it is not an anonymous way to log in.
+
+These credentials are therefore substituted for one PIN (generated in create report process), made of two parts - identity and secret ([further specification of the parts](#creating-report)).
+
+Otherwise, the process is the same as the user login process, but email is substituted for the identity part and password for the secret.
+
+**Pre-login endpoint** should be specified in more detail. It has two main purposes:
+
+- getting user salt - necessary for the pre-hash of the user password
+- getting user encryption version - for encryption migration
+  Also, it is important to note that the only parameter that can be supplied is the email of the user or the identity part of the PIN of the whistleblower.
+
+Making this endpoint secure is however quite hard in reality because it has to be:
+
+- constant time
+- deterministic on the input
+
+The constant time is the simpler of the two requisites. On each call of the endpoint, salt and version are generated, then DB is asked for the useand if it is not found, fake salt and version are returned.
+
+If the salt and version would be random, running the endpoint twice on the same input would leak pieces of information about registered and not registered emails.
+
+The implemented solution thus uses random data generation with seed (binary sequence composed of a few static bytes and bytes from the email). That should result in salt that is the same between the calls but not easily identifiable given the static pieces of data.
+
+_(The process of using seed in the data generation is genuinely the same as using HMAC. Should be upgraded in the future, but on the first search of this in libsodium documentation, I did not find it.)_
+
+### User registration and recovery
 
 Encrypting data with the user password is great, but users tend to lose passwords frequently, and not letting them recover somehow their account would be very strict. A recovery mechanism is implemented.
 
@@ -265,7 +298,7 @@ The current solution doesn't leverage E2EE advantages as it uses a server key. U
 
 Not having a key rotation strategy is surely not a best practice, but it is planned to be implemented soon for user key pair (public, private key).
 
-### Better chat message & internal comment encryption
+### Better chat message and internal comment encryption
 
 Chat messages and internal comments are currently encrypted one by one. This leaves space for attacks such as changing the order of messages that could be dangerous.
 A ratcheting system should be implemented instead, as it is in files encryption, but the problem is internal comments can be deleted. This isn't supported by libsodium `secretstream` so a simpler solution (one-by-one message encryption) was designed.
